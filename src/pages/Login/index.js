@@ -1,8 +1,16 @@
 import * as yup from "yup";
 import api from "../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import image from "../../../assets/image.png";
 import React, { useContext, useEffect, useState } from "react";
-import { Box, Form, Image, SafeAreaView, Text } from "./styles";
+import {
+  Box,
+  ErrorText,
+  Form,
+  Image,
+  SafeAreaView,
+  Text,
+} from "./styles";
 import { LoginContext } from "../../context";
 import { MaskedTextInput } from "react-native-mask-text";
 import { StatusBar } from "expo-status-bar";
@@ -17,10 +25,6 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import {
-  storeObjectData,
-  storeStringData,
-} from "../../services/storage";
 
 export default function Login() {
   const logged = useContext(LoginContext);
@@ -28,12 +32,15 @@ export default function Login() {
   const schema = yup.object().shape({
     cpf: yup
       .string()
-      .required("CPF obrigatório!")
-      .matches(/^(\d{11}|\d{3}\.\d{3}\.\d{3}\-\d{2})$/),
+      .required("cpf obrigatório!")
+      .matches(
+        /^(\d{11}|\d{3}\.\d{3}\.\d{3}\-\d{2})$/,
+        "cpf tem 11 dígitos: XXX.XXX.XXX-XX"
+      ),
     password: yup
       .string()
-      .required("Senha obrigatória!")
-      .min(8, "Mínimo de 8 dígitos!"),
+      .required("senha obrigatória!")
+      .min(8, "mínimo de 8 dígitos!"),
   });
 
   const { register, setValue, handleSubmit, formState, reset } =
@@ -49,19 +56,27 @@ export default function Login() {
     navigate("SignUp");
   }
 
+  const setItemStorage = async (key, value) => {
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch (error) {
+      console.log(`Error saving data: ${error}`);
+    }
+  };
+
   const handleSubmitLogin = (data) => {
     api
       .post("user/login/", { ...data })
       .then((res) => {
-        storeStringData("authToken", res.data.token);
-        storeObjectData("userData", JSON.stringify(res.data.user));
-        // setUser(res.data.user);
-        logged.toggleStatus;
-        reset();
+        setItemStorage("username", res.data.user);
+        logged.toggleStatus();
+        setItemStorage("token", res.data.token);
         Alert.alert("Sucesso", "Usuário logado!");
+        reset();
       })
       .catch((err) => {
         Alert.alert("Erro", "Combinação incorreta");
+        console.log(err);
       });
   };
 
@@ -97,6 +112,7 @@ export default function Login() {
               placeholder="Digite o seu cpf"
               style={styles.input}
             />
+            <ErrorText>{errors.cpf?.message}</ErrorText>
             <TextInput
               keyboardType="visible-password"
               maxLength={50}
@@ -106,6 +122,7 @@ export default function Login() {
               style={styles.input}
               textContentType={"password"}
             />
+            <ErrorText>{errors.password?.message}</ErrorText>
             <Button
               color="#006FFD"
               onPress={() =>
@@ -147,7 +164,8 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 40,
     marginHorizontal: 20,
-    marginVertical: 10,
+    marginVertical: 0,
+    marginTop: 10,
     padding: 10,
   },
 });

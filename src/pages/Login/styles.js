@@ -5,6 +5,12 @@ export const Box = styled.View`
   height: 240px;
   background-color: #eaf2ff;
 `;
+export const ErrorText = styled.Text`
+  color: #f00;
+  font-size: 13px;
+  font-weight: 800;
+  margin-left: 20px;
+`;
 export const Form = styled.View`
   background-color: #fff;
   min-height: 240px

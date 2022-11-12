@@ -2,7 +2,7 @@ import axios from "axios";
 import config from "../configs";
 import { getStringData } from "./storage";
 
-const token = getStringData("authToken");
+const token = getStringData("token");
 
 const api = axios.create({
   baseURL: config.BASE_URL,
